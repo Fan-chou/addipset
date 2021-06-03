@@ -1,12 +1,8 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
-	"os"
-	"strings"
+	"C"
 	"errors"
-	// "sync"
 	"net"
 
 	goipset "github.com/digineo/go-ipset/v2"
@@ -49,65 +45,28 @@ func shutdownLib() error {
 	return c.Close()
 }
 
-func main() {
-	counts := make(map[string]int)
-	input := bufio.NewScanner(os.Stdin)
 
-	fmt.Printf("输入 IP：\n")
+//export Add
+func Add(ips string, ipsetNames string) int {
 
-	for input.Scan() {
-		line := input.Text()
-
-		if line == "bye" {
-			break
-		}
-		counts[line]++
-
-		var cfgStr string
-		cfgStr = strings.TrimSpace(line)
-
-		hostsAndNames := strings.Split(cfgStr, "/")
-
-		hosts := strings.Split(hostsAndNames[0], ",")
-		ipsetNames := strings.Split(hostsAndNames[1], ",")
-
-		for i := range ipsetNames {
-			ipsetNames[i] = strings.TrimSpace(ipsetNames[i])
-		}
-
-		for i := range hosts {
-			hosts[i] = strings.TrimSpace(hosts[i])
-		}
-
-		// err := initLib()
-		// if err != nil {
-		// 	return err
-		// }
-		for i := range hosts {
-			for j := range ipsetNames {
-				err := initLib()
-				if err != nil {
-				}
-				err = flushSet(ipsetNames[j])
-				// if err != nil {
-				// 	fmt.Printf(string(err))
-				// }
-
-				err = addIP(net.ParseIP(hosts[i]), ipsetNames[j])
-				// if err != nil {
-				// 	fmt.Printf(string(err))
-				// }
-				err = shutdownLib()
-				// if err != nil {
-				// 	fmt.Printf(string(err))
-				// }
-			}
-		}
-
+	err := initLib()
+	if err != nil {
+		return 1
+	}
+	err = flushSet(ipsetNames)
+	if err != nil {
+		return 1
 	}
 
-
-	for line, n := range counts {
-		fmt.Printf("%d : %s\n", n, line)
+	err = addIP(net.ParseIP(ips), ipsetNames)
+	if err != nil {
+		return 1
 	}
+	err = shutdownLib()
+	if err != nil {
+		return 1
+	}
+	return 0
 }
+
+func main() {}
