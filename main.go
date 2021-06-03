@@ -51,10 +51,11 @@ func shutdownLib() error {
 	return c.Close()
 }
 
-
 //export Add
-func Add(ips string, ipsetNames string) int {
+func Add(ip *C.char, ipsetName *C.char) int {
 
+	ips := C.GoString(ip)
+	ipsetNames := C.GoString(ipsetName)
 	err := initLib()
 	if err != nil {
 		return 1
@@ -76,8 +77,10 @@ func Add(ips string, ipsetNames string) int {
 }
 
 //export Delete
-func Delete(ips string, ipsetNames string) int {
+func Delete(ip *C.char, ipsetName *C.char) int {
 
+	ips := C.GoString(ip)
+	ipsetNames := C.GoString(ipsetName)
 	err := initLib()
 	if err != nil {
 		return 1
