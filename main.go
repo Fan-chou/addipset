@@ -19,7 +19,7 @@ func initLib() (err error) {
 	return
 }
 
-func addIP(ip net.IP, list string) error {
+func ipset(action string, ip net.IP, list string) error {
 	p, err := c.Header(list)
 	if err != nil {
 		return err
@@ -34,12 +34,18 @@ func addIP(ip net.IP, list string) error {
 		return errors.New("not matched type")
 	}
 	// AddIPCount.WithLabelValues(list).Add(1)
-	return c.Add(list, goipset.NewEntry(goipset.EntryIP(ip)))
+	switch action {
+	case "add":
+		return c.Add(list, goipset.NewEntry(goipset.EntryIP(ip)))
+	case "del":
+		return c.Delete(list, goipset.NewEntry(goipset.EntryIP(ip)))
+	}
+	return errors.New("not support action")
 }
 
-func flushSet(list string) error {
-	return c.Flush(list)
-}
+// func flushSet(list string) error {
+// 	return c.Flush(list)
+// }
 
 func shutdownLib() error {
 	return c.Close()
@@ -53,12 +59,35 @@ func Add(ips string, ipsetNames string) int {
 	if err != nil {
 		return 1
 	}
-	err = flushSet(ipsetNames)
+	// err = flushSet(ipsetNames)
+	// if err != nil {
+	// 	return 1
+	// }
+
+	err = ipset("add", net.ParseIP(ips), ipsetNames)
 	if err != nil {
 		return 1
 	}
+	err = shutdownLib()
+	if err != nil {
+		return 1
+	}
+	return 0
+}
 
-	err = addIP(net.ParseIP(ips), ipsetNames)
+//export Delete
+func Delete(ips string, ipsetNames string) int {
+
+	err := initLib()
+	if err != nil {
+		return 1
+	}
+	// err = flushSet(ipsetNames)
+	// if err != nil {
+	// 	return 1
+	// }
+
+	err = ipset("del", net.ParseIP(ips), ipsetNames)
 	if err != nil {
 		return 1
 	}
